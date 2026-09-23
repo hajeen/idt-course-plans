@@ -38,24 +38,30 @@
 
   /* ---------- offering grid ---------- */
   .gridwrap{overflow-x:auto}
+  /* Cells stretch to the full row height, so the orange rule runs unbroken
+     across all seven columns and the zebra bands do not step. Each cell
+     centers its own content instead. */
   .grid{
     min-width:720px; display:grid;
     grid-template-columns:minmax(230px,1fr) repeat(6,minmax(64px,88px));
-    align-items:center;
+    align-items:stretch;
   }
-  .grid > *{padding:9px 8px}
-  .colhead{text-align:center; border-bottom:2px solid var(--orange)}
-  .colhead b{display:block; font-family:var(--display); font-weight:700; font-size:.88rem}
-  .colhead span{display:block; font-size:.76rem; color:var(--muted)}
+  .grid > *{padding:9px 8px; display:flex; align-items:center}
+  .colhead{
+    flex-direction:column; justify-content:flex-end; text-align:center;
+    border-bottom:2px solid var(--orange);
+  }
+  .colhead b{display:block; width:100%; font-family:var(--display); font-weight:700; font-size:.88rem}
+  .colhead span{display:block; width:100%; font-size:.76rem; color:var(--muted)}
   .corner{border-bottom:2px solid var(--orange)}
-  .cname{display:flex; gap:10px; align-items:baseline; white-space:nowrap}
+  .cname{gap:10px; white-space:nowrap}
   .cname code{
     font-family:var(--display); font-weight:700; font-size:.94rem;
     letter-spacing:.01em;
   }
   .cname span{font-size:.94rem; white-space:normal}
   .zebra{background:var(--tan2)}
-  .mark{text-align:center}
+  .mark{justify-content:center}
   .mark i{
     display:inline-block; width:15px; height:15px; border-radius:50%;
     background:var(--orange);
@@ -284,16 +290,20 @@ function render(){
   const label = PATHS.find(p=>p[0]===state.path)[1];
   const nCourses = rows.reduce((n,[,items])=>n + items.filter(c=>!c.alt).length, 0);
   const last = rows[rows.length-1][0];
+  /* Years count from the student's own first session, not from Fall 1. A student
+     who starts in Spring 2 is still in year 1 through the following Spring 1. */
+  const base = rows[0][0];
+  const yearOf = slot => Math.floor((slot - base)/6) + 1;
   document.getElementById("summary").innerHTML =
     `<b>${label}</b>, starting ${MONTHS[state.start]}: <b>${nCourses} courses</b> across ` +
-    `<b>${rows.length} sessions</b>, finishing in ${SESSIONS[last%6]} of year ${Math.floor(last/6)+1}.`;
+    `<b>${rows.length} sessions</b>, finishing in ${SESSIONS[last%6]} of year ${yearOf(last)}.`;
 
   const host = document.getElementById("track");
   host.innerHTML = "";
 
   const byYear = new Map();
   rows.forEach(([slot, items])=>{
-    const yr = Math.floor(slot/6) + 1;
+    const yr = yearOf(slot);
     if(!byYear.has(yr)) byYear.set(yr, []);
     byYear.get(yr).push([slot, items]);
   });
